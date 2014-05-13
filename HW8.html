@@ -1,0 +1,269 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+	<link rel="stylesheet" type="text/css" href="style.css">
+	<script src="http://yui.yahooapis.com/3.15.0/build/yui/yui-min.js"></script>
+	<script type="text/javascript">
+		var YAHOO = {
+    				Finance: {
+    					SymbolSuggest: {
+    					}
+    				}
+    			};
+		var req;
+		var jsonObject = null;
+		function Query(){
+			if(document.getElementById("ac-input").value == null || document.getElementById("ac-input").value == ""){
+				alert("Please enter a company symbol!");
+				return;
+			}
+			var index = document.getElementById("ac-input").value.indexOf(',');
+			var querystring;
+			if(index == -1)
+				querystring = document.getElementById("ac-input").value;
+			else
+				querystring = document.getElementById("ac-input").value.substring(0, index);
+			console.log(querystring);
+			var url = "http://cs-server.usc.edu:36586/examples/servlet/HW8Servlet?symbol=" + querystring;
+			if(window.XMLHttpRequest){
+				try{
+					req = new XMLHttpRequest();
+				} catch(e){
+					req = false;
+				}
+			}
+			else if(window.ActiveXObject){
+				try{
+					req = new ActiveXObject("Msxml2.XMLHTTP");
+				} catch (e){
+					try{
+						req = new ActiveXObject("Microsoft.XMLHTTP");
+					}
+					catch(e){
+						req = false;
+					}
+				}
+			}
+			if(req){
+				req.onreadystatechange = display;
+				req.open("GET", url, true);
+				req.send("");
+			}
+		}
+		function display(){
+			if(req.readyState == 4){
+				if(req.status == 200){
+					jsonObject = JSON.parse(req.responseText);
+					
+					//clear the two divs
+					document.getElementById("top_div").innerHTML = "";
+					document.getElementById("bot_div").innerHTML = "";
+					//create the top two divs
+					var topleftdiv = document.createElement("div");
+					topleftdiv.setAttribute("style", "width:450px; margin: 0px; text-align:left; float:left");
+					document.getElementById("top_div").appendChild(topleftdiv);
+					var toprightdiv = document.createElement("div");
+					toprightdiv.setAttribute("style", "width:300px; float:right");
+					document.getElementById("top_div").appendChild(toprightdiv);
+					
+					
+					var topleftstring = "<span style='color:white;text-align:left;font-size:250%'>" + jsonObject.result.Name + "(" + jsonObject.result.Symbol + ")</span><br>";
+					topleftstring += "<span style='color:white;text-align:left;font-size:350%'>" + jsonObject.result.Quote.LastTradePriceOnly + "</span>";
+					if(jsonObject.result.Quote.ChangeType == "+"){
+						topleftstring += " " + " <img style='height:35px; width:15px' src='http://www-scf.usc.edu/~csci571/2014Spring/hw6/up_g.gif'>" + "<span style='color:rgb(0,220,0);text-align:left;font-size:250%'>" 
+										 + jsonObject.result.Quote.Change + "(" + jsonObject.result.Quote.ChangeInPercent + ")</span><br>";
+					}
+					else{
+						topleftstring += " " + " <img style='height:35px; width:15px' src='http://www-scf.usc.edu/~csci571/2014Spring/hw6/down_r.gif'>" + "<span style='color:rgb(255,0,0);text-align:left;font-size:250%'>" 
+										 + jsonObject.result.Quote.Change + "(" + jsonObject.result.Quote.ChangeInPercent + ")</span><br>";
+					}
+					topleftstring += "<button onclick='PostFacebook()' id='FBbutton' style='color:white; width:100px; height:33px; font-size:100%'></button>";
+					topleftdiv.innerHTML = topleftstring;
+
+					toprightdiv.innerHTML = "<img src='" + jsonObject.result.StockChartImageURL + "'>";
+					document.getElementById("hr_div").innerHTML = "<hr style='height:1px; background-color:white; border:none;'>";
+
+					//create the YUI tabview
+					var quotecontent = "<table style='width:790px;'>" +
+										"<tr>" +
+										"<td>Prev Close:</td>";
+					if(jsonObject.result.Quote.PreviousClose != ""){
+						quotecontent += "<td style='text-align:center;'>" + jsonObject.result.Quote.PreviousClose + "</td>";
+					}
+					else{
+						quotecontent += "<td style='text-align:center;'> </td>";
+					}
+					quotecontent += "<td>Day's Range:</td>";
+					quotecontent += "<td style='text-align:right;'>" + jsonObject.result.Quote.DaysLow + " - " + jsonObject.result.Quote.DaysHigh + "</td>";
+					quotecontent += "</tr>";
+					//second row
+					quotecontent += "<tr>";
+					quotecontent += "<td>Open:</td>";
+					if(jsonObject.result.Quote.Open != "")
+						quotecontent += "<td style='text-align:center;'>" + jsonObject.result.Quote.Open + "</td>";
+					else
+						quotecontent += "<td style='text-align:center;'> </td>";
+					quotecontent += "<td>52wk Range:</td>";
+					quotecontent += "<td style='text-align:right;'>" + jsonObject.result.Quote.YearLow + " - " + jsonObject.result.Quote.YearHigh + "</td>";
+					quotecontent += "</tr>";
+					//third row
+					quotecontent += "<tr>";
+					quotecontent += "<td>Bid:</td>";
+					if(jsonObject.result.Quote.Bid != "")
+						quotecontent += "<td style='text-align:center;'>" + jsonObject.result.Quote.Bid + "</td>";
+					else
+						quotecontent += "<td style='text-align:center;'> </td>";
+					quotecontent += "<td>Volume:</td>";
+					if(jsonObject.result.Quote.Volume != "")
+						quotecontent += "<td style='text-align:right;'>" + jsonObject.result.Quote.Volume + "</td>";
+					else
+						quotecontent += "<td style='text-align:center;'> </td>";
+					quotecontent += "</tr>";
+					//fourth row
+					quotecontent += "<tr>";
+					quotecontent += "<td>Ask:</td>";
+					if(jsonObject.result.Quote.Ask != "")
+						quotecontent += "<td style='text-align:center;'>" + jsonObject.result.Quote.Ask + "</td>";
+					else
+						quotecontent += "<td style='text-align:center;'> </td>";
+					quotecontent += "<td>Avg Vol(3m):</td>";
+					if(jsonObject.result.Quote.AverageDailyVolume != "")
+						quotecontent += "<td style='text-align:right;'>" + jsonObject.result.Quote.AverageDailyVolume + "</td>";
+					else
+						quotecontent += "<td style='text-align:center;'> </td>";
+					quotecontent += "</tr>";
+					//fifth row
+					quotecontent += "<tr>";
+					quotecontent += "<td>1y Target Est:</td>";
+					if(jsonObject.result.Quote.OneYearTargetPrice != "")
+						quotecontent += "<td style='text-align:center;'>" + jsonObject.result.Quote.OneYearTargetPrice + "</td>";
+					else
+						quotecontent += "<td style='text-align:center;'> </td>";
+					quotecontent += "<td>Market Cap:</td>";
+					if(jsonObject.result.Quote.MarketCapitalization != "")
+						quotecontent += "<td style='text-align:right;'>" + jsonObject.result.Quote.MarketCapitalization + "</td>";
+					else
+						quotecontent += "<td style='text-align:center;'> </td>";
+					quotecontent += "</tr>";
+					quotecontent += "</table>";
+
+					var newscontent = "<ul>";
+					for(var i = 0; i < jsonObject.result.News.Item.length; i++){
+						newscontent += "<li><a target='_blank' href='" + jsonObject.result.News.Item[i].Link + "'>" + jsonObject.result.News.Item[i].Title.replace(/\ufffd\ufffd\ufffd/g, "'") + "</a></li>";
+					}
+					newscontent += "</ul>";
+					YUI().use('tabview', function(Y) {
+						var tabview = new Y.TabView({
+							children: [{
+								label: 'Quote Information',
+								content: quotecontent
+							},{
+								label: 'News Headlines',
+								content: newscontent
+							}]
+						});
+						tabview.render('#bot_div');
+					});
+				}
+				else{
+					jsonObject = null;
+					document.getElementById("top_div").innerHTML = "<h2 style='color:white;text-align:center;'>Stock Information Not Found!</h2>";	
+					document.getElementById("hr_div").innerHTML = "";
+					document.getElementById("bot_div").innerHTML = "";
+					alert("Server Exception: " + req.status);
+				}
+			}
+		}
+
+		function PostFacebook(){
+			if(jsonObject != null){
+				var firstLine = 'Stock Information of ' + jsonObject.result.Name + '(' + jsonObject.result.Symbol + ')<center></center>   ';
+				var secondLine = 'Last Trade Price: ' + jsonObject.result.Quote.LastTradePriceOnly + ', ' + 'Change: ' + jsonObject.result.Quote.ChangeType + jsonObject.result.Quote.Change + '(' + jsonObject.result.Quote.ChangeInPercent + ')';
+				FB.ui(
+      				{
+       					method: 'feed',
+       					name: jsonObject.result.Name,
+       					description: (
+          								firstLine +
+          								secondLine
+       					),
+       					picture: jsonObject.result.StockChartImageURL,
+       					link: 'http://finance.yahoo.com/q?s=' + jsonObject.result.Symbol
+      				},
+      				function(response) {
+        				if (response && response.post_id) {
+          						alert('Post was published.');
+        				} else {
+          						alert('Post was not published.');
+        				}
+      				}
+    			);
+			}
+			else
+				alert("Please Start a Search First!");
+		}
+	</script>
+</head>
+<body>
+	<!--Load the facebook javascript SDK-->
+	<div id="fb-root"></div>
+    <script>
+      window.fbAsyncInit = function() {
+        FB.init({
+          appId      : '839123302768819',
+          status     : true,
+          xfbml      : true
+        });
+      };
+
+      (function(d, s, id){
+         var js, fjs = d.getElementsByTagName(s)[0];
+         if (d.getElementById(id)) {return;}
+         js = d.createElement(s); js.id = id;
+         js.src = "//connect.facebook.net/en_US/all.js";
+         fjs.parentNode.insertBefore(js, fjs);
+       }(document, 'script', 'facebook-jssdk'));
+    </script>
+    
+    <!--YUI Autocomplete-->
+    <script>
+    YUI().use('autocomplete', 'autocomplete-highlighters', function (Y){
+    	Y.one('#ac-input').plug(Y.Plugin.AutoComplete, {
+    		activateFirstItem: true,
+    		resultHighlighter: 'phraseMatch',
+    		resultListLocator: 'ResultSet.Result',
+    		resultTextLocator: function (result) {
+    			return result.symbol + ', ' + result.name  + ' (' + result.exch + ')';
+    		},
+    		source: function (query, callback) {
+    			YAHOO.Finance.SymbolSuggest.ssCallback = function(data){
+    				callback(data);
+    			};
+    			var querystring = "http://autoc.finance.yahoo.com/autoc?query=" + query + "&callback=YAHOO.Finance.SymbolSuggest.ssCallback";
+    			var newscript = document.createElement('script');
+    			newscript.src = querystring;
+    			document.head.appendChild(newscript);
+    		},
+    		after: {
+    			select: function(){
+    				Query();
+    			}
+    		}
+    	});
+    });
+    </script>
+
+    <!-- html stuff -->
+    <div style="text-align: left; margin: 0 auto; width: 800px" class="yui3-skin-sam">
+	<span style="color:white; padding-left:40px">Company:</span>
+	<input type="text" id="ac-input" style="width:600px;">
+	<button onclick="Query()">Search</button><br><br>
+	<!--<button onclick="PostFacebook()" id="FBbutton" style="color:white; width:100px; height:33px; font-size:100%"></button><br><br>-->
+	<div id="top_div" style="margin-top:50px; width:800px; height:250px"></div>
+	<div id="hr_div" style="margin-top:0px; width:800px; height:20px"></div>
+	<div id="bot_div" class="yui3-skin-sam" style="margin-top:30px; width:800px; height:400px; text-align: left"></div>
+	</div>
+
+</body>
+</html>

@@ -1,0 +1,11 @@
+body{
+	background-image:url('background.jpg');
+	background-size: cover;
+	background-repeat:no-repeat;
+}
+
+#FBbutton{
+	background-image: url('fbbutton.jpg');
+	background-size: cover;
+	border: 0px;
+}
